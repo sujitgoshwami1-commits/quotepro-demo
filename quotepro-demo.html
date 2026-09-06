@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuotePro — Quote & Estimate Manager (Demo)</title><style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#667085;--line:#e6e9ef;--accent:#0d9488;--accent2:#0f766e;--danger:#dc2626;--success:#16a34a}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+.app{display:flex;min-height:100vh}.side{width:240px;background:#111827;color:#fff;padding:22px 16px;position:fixed;inset:0 auto 0 0}
+.brand{font-size:21px;font-weight:800;margin-bottom:28px}.nav button{display:block;width:100%;padding:11px 12px;margin:5px 0;border:0;border-radius:9px;background:transparent;color:#d1d5db;text-align:left;cursor:pointer}.nav button.active,.nav button:hover{background:#1f2937;color:#fff}
+.main{margin-left:240px;flex:1;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap}.top h1{margin:0;font-size:24px}.pill{padding:7px 10px;border-radius:999px;background:#ccfbf1;color:#0f766e;font-size:12px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:17px;box-shadow:0 2px 10px #00000008}.metric{font-size:26px;font-weight:800;margin-top:7px}.muted{color:var(--muted);font-size:13px}.section{margin-top:18px}.section h2{font-size:18px;margin:0 0 12px}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}th,td{padding:12px;border-bottom:1px solid var(--line);text-align:left;font-size:13px;white-space:nowrap}th{background:#f8fafc;font-size:11px;text-transform:uppercase;color:var(--muted)}
+.badge{display:inline-block;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:700}.green{background:#dcfce7;color:#166534}.orange{background:#ffedd5;color:#9a3412}.red{background:#fee2e2;color:#991b1b}.blue{background:#dbeafe;color:#1e40af}.gray{background:#e5e7eb;color:#374151}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.btn{border:0;border-radius:9px;padding:9px 12px;background:var(--accent);color:#fff;cursor:pointer;font-weight:700}.btn:hover{background:var(--accent2)}.btn.secondary{background:#eef2f7;color:#344054}.btn.danger{background:#fee2e2;color:#991b1b}.btn.small{padding:6px 9px;font-size:12px}
+.search{padding:10px 12px;border:1px solid var(--line);border-radius:9px;width:240px}
+.view{display:none}.view.active{display:block}
+.tablewrap{overflow:auto}
+.empty{padding:26px;text-align:center;color:var(--muted)}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:40}.modal.show{display:flex}.modalbox{background:#fff;border-radius:16px;max-width:640px;width:100%;padding:22px;max-height:90vh;overflow:auto}.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.close{width:32px;height:32px;border-radius:50%;background:#eef2f7;border:0;cursor:pointer}
+.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}.field input,.field select,.field textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px}
+.items-row{display:grid;grid-template-columns:2fr 70px 90px 32px;gap:8px;margin-bottom:8px;align-items:center}
+.toast{position:fixed;right:20px;bottom:20px;background:#111827;color:#fff;padding:12px 16px;border-radius:10px;display:none;z-index:60}.toast.show{display:block}
+@media(max-width:900px){.side{width:190px}.main{margin-left:190px}.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.side{position:static;width:100%;min-height:auto}.app{display:block}.main{margin-left:0;padding:15px}.grid{grid-template-columns:1fr}.top{gap:10px}.search{width:100%}.formgrid{grid-template-columns:1fr}}
+@media print{.side,.top,.no-print{display:none!important}.main{margin:0;width:100%;padding:0}}
+</style></head>
+<body><div class="app"><aside class="side"><div class="brand">QuotePro</div><div class="nav">
+<button class="active" onclick="show('dashboard',this)">Dashboard</button>
+<button onclick="show('quotes',this)">Quotes</button>
+<button onclick="show('customers',this)">Customers</button>
+<button onclick="show('reports',this)">Reports</button>
+</div></aside><main class="main">
+<div class="top"><h1>QuotePro — Quote & Estimate Manager</h1><span class="pill">Live Demo</span><select id="currencySelect" onchange="changeCurrency()" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line)"><option value="USD">USD $</option><option value="GBP">GBP £</option><option value="CAD">CAD $</option><option value="AUD">AUD $</option><option value="EUR">EUR €</option></select></div>
+<div class="notice" style="padding:12px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;color:#92400e;margin-bottom:15px;font-weight:700;font-size:13px">🕐 Demo Mode — all data resets automatically every day at midnight</div>
+
+<div id="dashboard" class="view active">
+<div class="grid">
+ <div class="card"><div class="muted">Total Quotes</div><div class="metric" id="dTotalQuotes">0</div></div>
+ <div class="card"><div class="muted">Accepted</div><div class="metric" id="dAccepted">$0</div></div>
+ <div class="card"><div class="muted">Pending</div><div class="metric" id="dPending">$0</div></div>
+ <div class="card"><div class="muted">Win Rate</div><div class="metric" id="dWinRate">0%</div></div>
+</div>
+<div class="section"><h2>Recent Quotes</h2><div class="tablewrap"><table><thead><tr><th>Quote #</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead><tbody id="dRecent"></tbody></table></div></div>
+</div>
+
+<div id="quotes" class="view">
+<div class="actions"><button class="btn" onclick="openQuoteModal()">+ Create Quote</button><input class="search" id="quoteSearch" placeholder="Search quote or customer…" oninput="renderQuotes()"></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>Quote #</th><th>Customer</th><th>Date</th><th>Valid Until</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody id="quotesTable"></tbody></table></div></div>
+</div>
+
+<div id="customers" class="view">
+<div class="actions"><button class="btn" onclick="openCustomerModal()">+ Add Customer</button></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Quotes</th><th>Action</th></tr></thead><tbody id="customersTable"></tbody></table></div></div>
+</div>
+
+<div id="reports" class="view">
+<div class="grid" style="grid-template-columns:repeat(3,1fr)">
+ <div class="card"><div class="muted">Total Quoted Value</div><div class="metric" id="rTotalValue">$0</div></div>
+ <div class="card"><div class="muted">Accepted Value</div><div class="metric" id="rAcceptedValue">$0</div></div>
+ <div class="card"><div class="muted">Win Rate</div><div class="metric" id="rWinRate">0%</div></div>
+</div>
+<div class="card" style="margin-top:14px"><button class="btn secondary" onclick="backupData()">Download JSON Backup</button> <button class="btn danger" onclick="resetData()">Reset Demo Data Now</button></div>
+</div>
+
+</main></div>
+
+<div class="modal" id="quoteModal"><div class="modalbox"><div class="modalhead"><h2 id="quoteModalTitle">Create Quote</h2><button class="close" onclick="closeModal('quoteModal')">×</button></div>
+<form onsubmit="saveQuote(event)">
+<input type="hidden" id="qId">
+<div class="formgrid">
+ <div class="field"><label>Customer</label><select id="qCustomer" required></select></div>
+ <div class="field"><label>Date</label><input id="qDate" type="date" required></div>
+ <div class="field"><label>Valid Until</label><input id="qValidUntil" type="date" required></div>
+ <div class="field"><label>Tax %</label><input id="qTax" type="number" value="0" min="0" step="0.01"></div>
+ <div class="field"><label>Status</label><select id="qStatus"><option>Draft</option><option>Sent</option><option>Accepted</option><option>Rejected</option><option>Expired</option></select></div>
+</div>
+<div style="margin-top:14px"><label style="font-size:12px;font-weight:700;color:var(--muted)">Items</label><div id="itemsList"></div><button type="button" class="btn secondary small" onclick="addItemRow()">+ Add Item</button></div>
+<div style="text-align:right;margin-top:12px;font-weight:800" id="quoteTotalPreview">Total: $0.00</div>
+<button class="btn" style="width:100%;margin-top:16px">Save Quote</button>
+</form></div></div>
+
+<div class="modal" id="customerModal"><div class="modalbox"><div class="modalhead"><h2>Add Customer</h2><button class="close" onclick="closeModal('customerModal')">×</button></div>
+<form onsubmit="saveCustomer(event)"><div class="formgrid"><div class="field"><label>Name</label><input id="cName" required></div><div class="field"><label>Email</label><input id="cEmail" type="email"></div><div class="field"><label>Phone</label><input id="cPhone"></div></div><button class="btn" style="width:100%;margin-top:16px">Save Customer</button></form></div></div>
+
+<div class="toast" id="toast"></div>
+<script>
+const KEY="quotepro_demo_v1";
+const RESET_KEY="quotepro_demo_last_reset";
+const DEFAULT_DB={
+ customers:[
+  {id:1,name:"Bright Studio",email:"hello@bright.example",phone:"+1 555 0121"},
+  {id:2,name:"Nova Agency",email:"team@nova.example",phone:"+1 555 0132"}
+ ],
+ quotes:[
+  {id:1,quoteNo:"Q-2026-0042",customerId:1,date:"2026-08-28",validUntil:"2026-09-11",items:[{desc:"Website redesign",qty:1,price:1200}],tax:0,status:"Sent"},
+  {id:2,quoteNo:"Q-2026-0041",customerId:2,date:"2026-08-20",validUntil:"2026-09-03",items:[{desc:"Logo design",qty:1,price:350}],tax:0,status:"Accepted"}
+ ],
+ nextQuoteNum:43,
+ currency:"USD"
+};
+function todayStr(){return new Date().toDateString()}
+function freshDB(){return JSON.parse(JSON.stringify(DEFAULT_DB))}
+function loadDB(){
+ let lastReset=localStorage.getItem(RESET_KEY),t=todayStr();
+ if(lastReset!==t){
+  localStorage.setItem(RESET_KEY,t);
+  localStorage.setItem(KEY,JSON.stringify(freshDB()));
+  return freshDB();
+ }
+ return JSON.parse(localStorage.getItem(KEY)||"null")||freshDB();
+}
+let db=loadDB();
+function save(){localStorage.setItem(KEY,JSON.stringify(db));localStorage.setItem(RESET_KEY,todayStr())}
+function checkMidnightReset(){
+ if(localStorage.getItem(RESET_KEY)!==todayStr()){
+  db=freshDB();
+  localStorage.setItem(KEY,JSON.stringify(db));
+  localStorage.setItem(RESET_KEY,todayStr());
+  renderAll();
+  toast("Demo data has been reset for a new day.");
+ }
+}
+setInterval(checkMidnightReset,60000);
+function money(n){return new Intl.NumberFormat(undefined,{style:"currency",currency:db.currency||"USD"}).format(Number(n)||0)}
+function changeCurrency(){db.currency=document.getElementById("currencySelect").value;save();renderAll()}
+function toast(t){let x=document.getElementById("toast");x.textContent=t;x.classList.add("show");setTimeout(()=>x.classList.remove("show"),2200)}
+function show(id,el){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderAll()}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function customerName(id){return db.customers.find(c=>c.id==id)?.name||"Unknown"}
+function quoteTotal(q){let sub=q.items.reduce((a,i)=>a+i.qty*i.price,0);let tax=sub*(q.tax||0)/100;return sub+tax}
+function badgeClass(s){return s==="Accepted"?"green":s==="Rejected"?"red":s==="Expired"?"gray":s==="Sent"?"blue":"orange"}
+function renderAll(){document.getElementById("currencySelect").value=db.currency||"USD";renderDashboard();renderQuotes();renderCustomers();renderReports()}
+function renderDashboard(){
+ let accepted=db.quotes.filter(q=>q.status==="Accepted").reduce((a,q)=>a+quoteTotal(q),0);
+ let pending=db.quotes.filter(q=>["Draft","Sent"].includes(q.status)).reduce((a,q)=>a+quoteTotal(q),0);
+ let decided=db.quotes.filter(q=>["Accepted","Rejected"].includes(q.status));
+ let won=db.quotes.filter(q=>q.status==="Accepted").length;
+ dTotalQuotes.textContent=db.quotes.length;dAccepted.textContent=money(accepted);dPending.textContent=money(pending);
+ dWinRate.textContent=(decided.length?Math.round(won/decided.length*100):0)+"%";
+ dRecent.innerHTML=db.quotes.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6).map(q=>`<tr><td>${q.quoteNo}</td><td>${customerName(q.customerId)}</td><td>${money(quoteTotal(q))}</td><td><span class="badge ${badgeClass(q.status)}">${q.status}</span></td></tr>`).join("")||`<tr><td colspan="4" class="empty">No quotes yet.</td></tr>`;
+}
+function renderQuotes(){
+ let q=(document.getElementById("quoteSearch")?.value||"").toLowerCase();
+ let arr=db.quotes.filter(x=>!q||[x.quoteNo,customerName(x.customerId)].join(" ").toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
+ quotesTable.innerHTML=arr.map(x=>`<tr><td>${x.quoteNo}</td><td>${customerName(x.customerId)}</td><td>${x.date}</td><td>${x.validUntil}</td><td>${money(quoteTotal(x))}</td><td><span class="badge ${badgeClass(x.status)}">${x.status}</span></td><td><button class="btn small secondary" onclick="editQuote(${x.id})">Edit</button> <button class="btn small danger" onclick="deleteQuote(${x.id})">Delete</button></td></tr>`).join("")||`<tr><td colspan="7" class="empty">No quotes found.</td></tr>`;
+}
+let itemRows=[];
+function openQuoteModal(q){
+ qCustomer.innerHTML=db.customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+ document.getElementById("qId").value=q?.id||"";
+ qDate.value=q?.date||new Date().toISOString().slice(0,10);
+ qValidUntil.value=q?.validUntil||new Date(Date.now()+14*864e5).toISOString().slice(0,10);
+ qTax.value=q?.tax||0;qStatus.value=q?.status||"Draft";
+ if(q)qCustomer.value=q.customerId;
+ itemRows=q?JSON.parse(JSON.stringify(q.items)):[{desc:"",qty:1,price:0}];
+ renderItemRows();
+ document.getElementById("quoteModalTitle").textContent=q?"Edit Quote":"Create Quote";
+ document.getElementById("quoteModal").classList.add("show");
+}
+function editQuote(id){openQuoteModal(db.quotes.find(x=>x.id===id))}
+function renderItemRows(){
+ itemsList.innerHTML=itemRows.map((it,idx)=>`<div class="items-row"><input placeholder="Description" value="${it.desc}" oninput="itemRows[${idx}].desc=this.value"><input type="number" min="1" value="${it.qty}" oninput="itemRows[${idx}].qty=Number(this.value)||1;updateQuotePreview()"><input type="number" min="0" step="0.01" value="${it.price}" oninput="itemRows[${idx}].price=Number(this.value)||0;updateQuotePreview()"><button type="button" class="btn small danger" onclick="removeItemRow(${idx})">×</button></div>`).join("");
+ updateQuotePreview();
+}
+function addItemRow(){itemRows.push({desc:"",qty:1,price:0});renderItemRows()}
+function removeItemRow(idx){itemRows.splice(idx,1);if(!itemRows.length)itemRows.push({desc:"",qty:1,price:0});renderItemRows()}
+function updateQuotePreview(){
+ let sub=itemRows.reduce((a,i)=>a+(i.qty*i.price),0);
+ let tax=sub*(Number(qTax?.value)||0)/100;
+ document.getElementById("quoteTotalPreview").textContent="Total: "+money(sub+tax);
+}
+document.addEventListener("input",e=>{if(e.target&&e.target.id==="qTax")updateQuotePreview()});
+function saveQuote(e){
+ e.preventDefault();
+ let id=Number(qId.value);
+ let obj={id:id||Date.now(),customerId:Number(qCustomer.value),date:qDate.value,validUntil:qValidUntil.value,items:itemRows.filter(i=>i.desc||i.price),tax:Number(qTax.value)||0,status:qStatus.value};
+ if(id){obj.quoteNo=db.quotes.find(x=>x.id===id).quoteNo;db.quotes=db.quotes.map(x=>x.id===id?obj:x)}
+ else{obj.quoteNo="Q-2026-"+String(db.nextQuoteNum).padStart(4,"0");db.nextQuoteNum++;db.quotes.push(obj)}
+ save();closeModal("quoteModal");renderAll();toast("Quote saved: "+obj.quoteNo);
+}
+function deleteQuote(id){if(confirm("Delete this quote?")){db.quotes=db.quotes.filter(x=>x.id!==id);save();renderAll()}}
+function renderCustomers(){
+ customersTable.innerHTML=db.customers.map(c=>`<tr><td><b>${c.name}</b></td><td>${c.email||"—"}</td><td>${c.phone||"—"}</td><td>${db.quotes.filter(q=>q.customerId===c.id).length}</td><td><button class="btn small danger" onclick="deleteCustomer(${c.id})">Delete</button></td></tr>`).join("")||`<tr><td colspan="5" class="empty">No customers.</td></tr>`;
+}
+function openCustomerModal(){document.getElementById("customerModal").classList.add("show")}
+function saveCustomer(e){e.preventDefault();db.customers.push({id:Date.now(),name:cName.value,email:cEmail.value,phone:cPhone.value});save();closeModal("customerModal");e.target.reset();renderAll();toast("Customer added")}
+function deleteCustomer(id){if(confirm("Delete customer?")){db.customers=db.customers.filter(c=>c.id!==id);save();renderAll()}}
+function renderReports(){
+ let total=db.quotes.reduce((a,q)=>a+quoteTotal(q),0);
+ let accepted=db.quotes.filter(q=>q.status==="Accepted").reduce((a,q)=>a+quoteTotal(q),0);
+ let decided=db.quotes.filter(q=>["Accepted","Rejected"].includes(q.status));
+ let won=db.quotes.filter(q=>q.status==="Accepted").length;
+ rTotalValue.textContent=money(total);rAcceptedValue.textContent=money(accepted);
+ rWinRate.textContent=(decided.length?Math.round(won/decided.length*100):0)+"%";
+}
+function backupData(){let blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="quotepro-backup.json";a.click();URL.revokeObjectURL(a.href)}
+function resetData(){if(confirm("Reset all local demo data now?")){db=freshDB();localStorage.setItem(KEY,JSON.stringify(db));localStorage.setItem(RESET_KEY,todayStr());renderAll();toast("Demo data reset.")}}
+renderAll();
+</script>
+</body></html>
